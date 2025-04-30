@@ -1,0 +1,85 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  draft
+  in_progress
+  completed
+  archived
+}
+
+enum EngineerSpeciality {
+  mechanical
+  electrical
+  aerodynamics
+  software
+}
+
+enum PrototypeStatus {
+  designing
+  building
+  testing
+  approved
+}
+
+model Project {
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String
+  status        ProjectStatus
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  engineers     Engineer[]     @relation("ProjectEngineers")
+  carPrototypes CarPrototype[]
+
+  @@map("projects")
+}
+
+
+model Engineer {
+  id        Int                @id @default(autoincrement())
+  name      String
+  specialty EngineerSpeciality
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  projects  Project[]          @relation("ProjectEngineers")
+
+  @@map("engineers")
+}
+
+
+model CarPrototype {
+  id          Int             @id @default(autoincrement())
+  version     String
+  status      PrototypeStatus
+  text        String
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  projectId   Int
+  project     Project         @relation(fields: [projectId], references: [id])
+  testResults TestResult[]
+
+  @@map("car_prototypes")
+}
+
+
+model TestResult {
+  id          Int          @id @default(autoincrement())
+  prototypeId Int
+  prototype   CarPrototype @relation(fields: [prototypeId], references: [id])
+  testType    String
+  result      Float
+  passed      Boolean
+  comments    String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("test_results")
+}
